@@ -9,7 +9,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestTemplate;
+import reactor.core.publisher.Flux;
 
 import java.io.File;
 
@@ -19,7 +21,6 @@ import java.io.File;
 @SpringBootApplication
 public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
-    private static final long TO_ABOVE_BYTE_RANGE = 1024L;
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
@@ -31,10 +32,13 @@ public class Main {
         // TODO : Implement a fixed amount of file to generate and inject
         return args -> {
             StorageService service = new StorageService(restTemplate);
-            File fileToUpload = FileCreator.generateRandomFile(4*TO_ABOVE_BYTE_RANGE);
-            LOGGER.debug("File : {}", fileToUpload.toString());
-            LOGGER.debug("File size : {}", fileToUpload.length());
-            service.uploadFile(fileToUpload);
+            //File fileToUpload = FileCreator.generateRandomFile(4*TO_ABOVE_BYTE_RANGE);
+            Flux<File> files = FileCreator.randomFilesCreator(100);
+            StopWatch watch = new StopWatch();
+            watch.start();
+            files.subscribe( (f) -> LOGGER.info("Obtained file {} of size {}", f.getName(), f.length()));
+            watch.stop();
+            LOGGER.info("FINISHED GENERATING FILES IN {} MS", watch.getLastTaskTimeMillis());
         };
 
     }

@@ -40,12 +40,12 @@ public class StorageService {
 
         HttpEntity<FileSystemResource> fileEntity = new HttpEntity<>(new FileSystemResource(fileToUpload), fileHeaders);
 
-        MultiValueMap<String, Object> multiPartRequest = new LinkedMultiValueMap<String, Object>();
+        MultiValueMap<String, Object> multiPartRequest = new LinkedMultiValueMap<>();
         multiPartRequest.add("file", fileEntity);
 
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(multiPartRequest, mainHeader);
 
-        LOGGER.info("POST content : {}",
-                template.postForEntity(STORAGE_URL, entity, FileURL.class).toString());
+
+        LOGGER.info("POST STEP NOT WORKING CURRENTLY FOR FILE {} of size {}", fileToUpload.getName(), fileToUpload.length());
     }
 }
