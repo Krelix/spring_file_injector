@@ -31,14 +31,20 @@ public class Main {
     public CommandLineRunner run(RestTemplate restTemplate) throws Exception {
         // TODO : Implement a fixed amount of file to generate and inject
         return args -> {
-            StorageService service = new StorageService(restTemplate);
-            //File fileToUpload = FileCreator.generateRandomFile(4*TO_ABOVE_BYTE_RANGE);
+            StorageService service = new StorageService();
+
             Flux<File> files = FileCreator.randomFilesCreator(100);
             StopWatch watch = new StopWatch();
-            watch.start();
+            watch.start("filegeneration");
+            // send each files to the storage service in parallel ?
             files.subscribe( (f) -> LOGGER.info("Obtained file {} of size {}", f.getName(), f.length()));
             watch.stop();
             LOGGER.info("FINISHED GENERATING FILES IN {} MS", watch.getLastTaskTimeMillis());
+            LOGGER.info("About to start calling the fake service...");
+            watch.start("upload");
+            service.uploadFiles(files, restTemplate);
+            watch.stop();
+            LOGGER.info("FINISHED CALLING SERVICE IN {} MS", watch.getLastTaskTimeMillis());
         };
 
     }

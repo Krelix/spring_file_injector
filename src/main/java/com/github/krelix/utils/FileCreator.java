@@ -19,13 +19,13 @@ public final class FileCreator {
     // Help converting from bytes to KB (and higher)
     private static final long TO_ABOVE_BYTE_RANGE = 1024;
     // Max file size in MB
-    private static final long MAX_FILE_SIZE = 15 * TO_ABOVE_BYTE_RANGE * TO_ABOVE_BYTE_RANGE;
+    private static final long MAX_FILE_SIZE = 1 * TO_ABOVE_BYTE_RANGE * TO_ABOVE_BYTE_RANGE;
     // Minimum file size in bytes (to avoid 0 length files)
     private static final long MIN_FILE_SIZE = 500;
 
     private static long generateRandomFileSize() {
         final long value = Math.abs((new Random()).nextLong() % MAX_FILE_SIZE);
-        return value < MIN_FILE_SIZE ? MIN_FILE_SIZE : value ;
+        return value < MIN_FILE_SIZE ? MIN_FILE_SIZE : value;
     }
 
 
@@ -35,32 +35,35 @@ public final class FileCreator {
         return bytes;
     }
 
-    public static File generateRandomFile(long length)
-            throws IOException {
-        File randomFile = File.createTempFile("tmp_data", ".jtmp");
-        FileOutputStream fileOut = new FileOutputStream(randomFile);
-        randomFile.setWritable(true);
-        randomFile.deleteOnExit();
-        while (randomFile.length() < length) {
-            // To avoid some shenanigans with array sizes exceeding
-            // the max authorized VM value
-            int buffer = Integer.MAX_VALUE / 2;
-            if (length < buffer) {
-                buffer = (int) length;
+    public static File generateRandomFile(long length) {
+        try {
+            File randomFile = File.createTempFile("tmp_data", ".jtmp");
+            FileOutputStream fileOut = new FileOutputStream(randomFile);
+            randomFile.setWritable(true);
+            randomFile.deleteOnExit();
+            while (randomFile.length() < length) {
+                // To avoid some shenanigans with array sizes exceeding
+                // the max authorized VM value
+                int buffer = Integer.MAX_VALUE / 2;
+                if (length < buffer) {
+                    buffer = (int) length;
+                }
+                fileOut.write(generateRandomByteArray(buffer));
+                fileOut.flush();
             }
-            fileOut.write(generateRandomByteArray(buffer));
-            fileOut.flush();
+            return randomFile;
+        } catch (IOException e) {
+            LOGGER.error("Error while creating a file", e);
         }
-        return randomFile;
+        return null;
     }
 
-    public static Flux<File> randomFilesCreator(int amount) {
+    public static Flux<File> randomFilesCreator(int amount) throws IOException {
         final List<File> files = new ArrayList<>();
-        for(int i = 0; i < amount; i++) {
-            try {
-                files.add(generateRandomFile(generateRandomFileSize()));
-            } catch (IOException e) {
-                LOGGER.error("An error occured during file generation", e);
+        for (int i = 0; i < amount; i++) {
+            final File file = generateRandomFile(generateRandomFileSize());
+            if(file != null) {
+                files.add(file);
             }
         }
         return Flux.fromIterable(files);
